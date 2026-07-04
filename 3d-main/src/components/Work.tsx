@@ -1,18 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
-import "./styles/PortfolioCarousel.css";
+import { useState, useMemo } from "react";
 import "./styles/Work.css";
-import WorkImage from "./WorkImage";
-import PortfolioGridOverlay from "./PortfolioGridOverlay";
 import { projects, PROJECT_DOMAINS } from "../data/projects";
-import {
-  MdArrowBack,
-  MdArrowForward,
-  MdGridView,
-  MdSearch,
-  MdClose,
-} from "react-icons/md";
+import { MdArrowOutward, MdSearch, MdClose } from "react-icons/md";
 
-type SlideDirection = "next" | "prev";
 type FilterValue = "All" | (typeof PROJECT_DOMAINS)[number];
 
 const filters: FilterValue[] = ["All", ...PROJECT_DOMAINS];
@@ -20,10 +10,6 @@ const filters: FilterValue[] = ["All", ...PROJECT_DOMAINS];
 const Work = () => {
   const [activeFilter, setActiveFilter] = useState<FilterValue>("All");
   const [query, setQuery] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState<SlideDirection>("next");
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isGridOpen, setIsGridOpen] = useState(false);
 
   const visibleProjects = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -39,55 +25,8 @@ const Work = () => {
     });
   }, [activeFilter, query]);
 
-  const safeIndex = visibleProjects.length
-    ? Math.min(currentIndex, visibleProjects.length - 1)
-    : 0;
-  const project = visibleProjects[safeIndex];
-
-  const applyFilter = useCallback((next: FilterValue) => {
-    setActiveFilter(next);
-    setCurrentIndex(0);
-  }, []);
-
-  const applyQuery = useCallback((next: string) => {
-    setQuery(next);
-    setCurrentIndex(0);
-  }, []);
-
-  const goToSlide = useCallback(
-    (index: number, nextDirection: SlideDirection) => {
-      if (isAnimating || index === safeIndex) return;
-      setDirection(nextDirection);
-      setIsAnimating(true);
-      setCurrentIndex(index);
-      window.setTimeout(() => setIsAnimating(false), 720);
-    },
-    [safeIndex, isAnimating]
-  );
-
-  const goToPrev = useCallback(() => {
-    if (!visibleProjects.length) return;
-    const newIndex =
-      safeIndex === 0 ? visibleProjects.length - 1 : safeIndex - 1;
-    goToSlide(newIndex, "prev");
-  }, [safeIndex, visibleProjects.length, goToSlide]);
-
-  const goToNext = useCallback(() => {
-    if (!visibleProjects.length) return;
-    const newIndex =
-      safeIndex === visibleProjects.length - 1 ? 0 : safeIndex + 1;
-    goToSlide(newIndex, "next");
-  }, [safeIndex, visibleProjects.length, goToSlide]);
-
-  const gridItems = useMemo(
-    () =>
-      visibleProjects.map((p) => ({
-        title: p.title,
-        subtitle: p.category,
-        image: p.image,
-      })),
-    [visibleProjects]
-  );
+  const featured = visibleProjects.find((p) => p.featured);
+  const rest = visibleProjects.filter((p) => !p.featured);
 
   return (
     <section className="work-section" id="work">
@@ -117,7 +56,7 @@ const Work = () => {
                 className={`work-filter-chip ${
                   activeFilter === filter ? "work-filter-chip-active" : ""
                 }`}
-                onClick={() => applyFilter(filter)}
+                onClick={() => setActiveFilter(filter)}
                 data-cursor="disable"
               >
                 {filter}
@@ -125,158 +64,108 @@ const Work = () => {
             ))}
           </div>
 
-          <div className="work-toolbar-actions">
-            <div className="work-search">
-              <MdSearch aria-hidden="true" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => applyQuery(e.target.value)}
-                placeholder="Search by tech or keyword"
-                aria-label="Search projects"
-              />
-              {query && (
-                <button
-                  type="button"
-                  className="work-search-clear"
-                  onClick={() => applyQuery("")}
-                  aria-label="Clear search"
-                  data-cursor="disable"
-                >
-                  <MdClose />
-                </button>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className="work-browse-all"
-              onClick={() => setIsGridOpen(true)}
-              data-cursor="disable"
-              disabled={!visibleProjects.length}
-            >
-              <MdGridView />
-              Browse all
-            </button>
-          </div>
-        </div>
-
-        <div className="portfolio-book-carousel portfolio-carousel">
-          <div className="portfolio-carousel-stage">
-            {project ? (
-              <div
-                key={`${project.id}-${safeIndex}`}
-                className={`portfolio-carousel-card portfolio-flip-${direction}`}
+          <div className="work-search">
+            <MdSearch aria-hidden="true" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by tech or keyword"
+              aria-label="Search projects"
+            />
+            {query && (
+              <button
+                type="button"
+                className="work-search-clear"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                data-cursor="disable"
               >
-                <article className="portfolio-project-card work-card">
-                  <div className="portfolio-project-media">
-                    <div className="portfolio-project-badges">
-                      <span className="portfolio-project-badge">
-                        {project.category}
-                      </span>
-                      <span className="portfolio-project-badges-right">
-                        {project.featured && (
-                          <span className="portfolio-project-featured">
-                            Latest
-                          </span>
-                        )}
-                        <span className="portfolio-project-count">
-                          {String(safeIndex + 1).padStart(2, "0")} / {String(
-                            visibleProjects.length
-                          ).padStart(2, "0")}
-                        </span>
-                      </span>
-                    </div>
-
-                    <WorkImage
-                      image={project.image}
-                      alt={project.title}
-                      link={project.link}
-                    />
-                  </div>
-
-                  <div className="portfolio-project-strip portfolio-project-strip-title">
-                    <span className="portfolio-project-label">Title</span>
-                    <h4>{project.title}</h4>
-                  </div>
-
-                  <div className="portfolio-project-strip portfolio-project-strip-stack">
-                    <span className="portfolio-project-label">
-                      Tech Stack
-                    </span>
-                    <p>{project.tools}</p>
-                  </div>
-                </article>
-              </div>
-            ) : (
-              <div className="portfolio-empty-state">
-                <p>No projects match that search yet — try another keyword.</p>
-              </div>
+                <MdClose />
+              </button>
             )}
           </div>
+        </div>
 
-          <div className="portfolio-nav-row">
-            <div className="portfolio-arrow-group">
-              <button
-                className="carousel-arrow"
-                onClick={goToPrev}
-                aria-label="Previous project"
+        {visibleProjects.length === 0 ? (
+          <div className="portfolio-empty-state">
+            <p>No projects match that search yet — try another keyword.</p>
+          </div>
+        ) : (
+          <>
+            {featured && (
+              <a
+                className="work-feature-card"
+                href={featured.link}
+                target="_blank"
+                rel="noreferrer"
                 data-cursor="disable"
-                disabled={isAnimating || !visibleProjects.length}
               >
-                <MdArrowBack />
-              </button>
-              <button
-                className="carousel-arrow"
-                onClick={goToNext}
-                aria-label="Next project"
-                data-cursor="disable"
-                disabled={isAnimating || !visibleProjects.length}
-              >
-                <MdArrowForward />
-              </button>
-            </div>
+                <div className="work-feature-media">
+                  <img src={featured.image} alt={featured.title} loading="lazy" />
+                  <span className="work-feature-tag">Latest</span>
+                </div>
+                <div className="work-feature-body">
+                  <span className="work-card-category">
+                    {featured.category}
+                  </span>
+                  <h3>{featured.title}</h3>
+                  <div className="work-card-tags">
+                    {featured.tools.split(",").map((tool) => (
+                      <span key={tool} className="work-card-tag">
+                        {tool.trim()}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="work-card-link">
+                    View project <MdArrowOutward />
+                  </span>
+                </div>
+              </a>
+            )}
 
-            <div className="portfolio-carousel-status" aria-live="polite">
-              <span>Flip through projects</span>
-              <span className="portfolio-carousel-divider" />
-              <span>{project ? project.title : "—"}</span>
-            </div>
-
-            <div className="carousel-dots">
-              {visibleProjects.map((item, index) => (
-                <button
-                  key={item.id}
-                  className={`carousel-dot ${
-                    index === safeIndex ? "carousel-dot-active" : ""
-                  }`}
-                  onClick={() =>
-                    goToSlide(index, index > safeIndex ? "next" : "prev")
-                  }
-                  aria-label={`Go to project ${index + 1}`}
+            <div className="work-grid">
+              {rest.map((project) => (
+                <a
+                  key={project.id}
+                  className="work-card"
+                  href={project.link}
+                  target="_blank"
+                  rel="noreferrer"
                   data-cursor="disable"
-                  disabled={isAnimating}
-                />
+                >
+                  <div className="work-card-media">
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      loading="lazy"
+                    />
+                    <span className="work-card-link-icon">
+                      <MdArrowOutward />
+                    </span>
+                  </div>
+                  <div className="work-card-body">
+                    <span className="work-card-category">
+                      {project.category}
+                    </span>
+                    <h4>{project.title}</h4>
+                    <div className="work-card-tags">
+                      {project.tools
+                        .split(",")
+                        .slice(0, 3)
+                        .map((tool) => (
+                          <span key={tool} className="work-card-tag">
+                            {tool.trim()}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                </a>
               ))}
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
-
-      <PortfolioGridOverlay
-        heading={`My Work — ${visibleProjects.length} project${
-          visibleProjects.length === 1 ? "" : "s"
-        }`}
-        items={gridItems}
-        isOpen={isGridOpen}
-        activeIndex={safeIndex}
-        onClose={() => setIsGridOpen(false)}
-        onSelect={(index) => {
-          setDirection(index > safeIndex ? "next" : "prev");
-          setCurrentIndex(index);
-          setIsGridOpen(false);
-        }}
-      />
     </section>
   );
 };
