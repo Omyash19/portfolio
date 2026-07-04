@@ -6,11 +6,7 @@ const About = () => {
       <div className="about-me">
         <h3 className="title">About Me</h3>
         <p className="para">
-          I'm a final-year IT engineering student who builds end-to-end data
-          systems — ETL pipelines, ML models, and BI dashboards — across
-          sports, fintech, healthcare, and supply chain domains. From cloud
-          pipelines on AWS and GCP to production-ready ML APIs, I turn messy
-          raw data into decisions that matter.
+          I am a Data Analyst and Machine Learning Engineer passionate about bridging the gap between raw data and predictive intelligence. Armed with tools like Python, SQL, Power BI, and Streamlit, I design robust data pipelines, interactive business dashboards, and real-time AI-driven platforms. Whether architecting global analytics tools or engineering intelligent communication systems, I am dedicated to unlocking efficiency, solving technical challenges, and building clean, impactful data infrastructure.
         </p>
       </div>
     </div>
